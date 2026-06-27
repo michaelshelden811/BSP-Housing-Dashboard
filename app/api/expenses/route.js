@@ -88,7 +88,29 @@ export async function DELETE(request) {
   const { searchParams } = new URL(request.url)
   const id = searchParams.get('id')
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
+
+  // Fetch the expense first so we know if it's recurring
+  const { data: expense } = await supabase.from('expenses').select('*').eq('id', id).single()
+
+  // Delete it
   const { error } = await supabase.from('expenses').delete().eq('id', id)
   if (error) return Response.json({ error: error.message }, { status: 500 })
+
+  // If it was recurring, also flip is_recurring=false on the prior month's matching record
+  // so the seed logic doesn't bring it back on next page load
+  if (expense && expense.is_recurring) {
+    const prevMonth = expense.month === 1 ? 12 : expense.month - 1
+    const prevYear = expense.month === 1 ? expense.year - 1 : expense.year
+    await supabase
+      .from('expenses')
+      .update({ is_recurring: false })
+      .eq('month', prevMonth)
+      .eq('year', prevYear)
+      .eq('house', expense.house)
+      .eq('category', expense.category)
+      .eq('description', expense.description || '')
+      .eq('is_recurring', true)
+  }
+
   return Response.json({ success: true })
 }
