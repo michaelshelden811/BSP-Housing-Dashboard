@@ -124,21 +124,16 @@ export default function ExpensesPage() {
           {loading ? <div style={{ color: '#555', fontSize: 13 }}>Loading...</div>
           : filtered.length === 0 ? <div style={{ color: '#555', fontSize: 13 }}>No expenses logged for this period.</div>
           : <>
-            <div style={{ display: 'grid', gridTemplateColumns: '120px 160px 1fr 90px 100px 40px', gap: 8, padding: '6px 0', borderBottom: '1px solid #1a1a1a', fontSize: 10, color: '#555', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
-              <span>House</span><span>Category</span><span>Description</span><span></span><span style={{ textAlign: 'right' }}>Amount</span><span></span>
-            </div>
             {filtered.map(e => (
-              <div key={e.id} style={{ display: 'grid', gridTemplateColumns: '120px 160px 1fr 90px 100px 40px', gap: 8, padding: '9px 0', borderBottom: '1px solid #1a1a1a', alignItems: 'center' }}>
-                <span style={{ fontSize: 12, color: '#888', textTransform: 'capitalize' }}>{e.house === 'org' ? 'Org-Level' : e.house}</span>
-                <span style={{ fontSize: 13, color: '#e8e8e8' }}>{catLabel(e.category)}</span>
-                <span style={{ fontSize: 12, color: '#888' }}>{e.description || '—'}</span>
-                <span>
-                  {e.is_recurring && (
-                    <span style={{ fontSize: 10, color: '#5b9cf6', background: 'rgba(91,156,246,0.1)', border: '1px solid rgba(91,156,246,0.2)', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>↻ recurring</span>
-                  )}
-                </span>
-                <span style={{ fontSize: 13, color: '#f87171', fontWeight: 500, textAlign: 'right' }}>-{fmt(e.amount)}</span>
-                <button onClick={() => deleteExpense(e.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 14, fontWeight: 700, lineHeight: 1 }} title="Delete expense">✕</button>
+              <div key={e.id} style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '10px 0', borderBottom: '1px solid #1a1a1a' }}>
+                <span style={{ fontSize: 12, color: '#888', textTransform: 'capitalize', minWidth: 80 }}>{e.house === 'org' ? 'Org-Level' : e.house}</span>
+                <span style={{ fontSize: 13, color: '#e8e8e8', minWidth: 120 }}>{catLabel(e.category)}</span>
+                <span style={{ fontSize: 12, color: '#888', flex: 1 }}>{e.description || '—'}</span>
+                {e.is_recurring && (
+                  <span style={{ fontSize: 10, color: '#5b9cf6', background: 'rgba(91,156,246,0.1)', border: '1px solid rgba(91,156,246,0.2)', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>↻ recurring</span>
+                )}
+                <span style={{ fontSize: 13, color: '#f87171', fontWeight: 500, minWidth: 70, textAlign: 'right' }}>-{fmt(e.amount)}</span>
+                <button onClick={() => deleteExpense(e.id)} style={{ background: '#2a0a0a', border: '1px solid #5a1a1a', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700, borderRadius: 4, padding: '3px 8px', flexShrink: 0 }} title="Delete expense">✕</button>
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0' }}>
