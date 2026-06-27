@@ -60,9 +60,9 @@ export default function ExpensesPage() {
       if (!res.ok) {
         setDeleteMsg('Error ' + res.status + ': ' + (d.error || 'unknown'))
       } else {
-        setDeleteMsg('Deleted ✓')
-        setTimeout(() => setDeleteMsg(null), 2000)
-        load()
+        // Remove from local state directly — do NOT reload from server
+        // (reloading re-seeds recurring expenses and makes deleted items reappear)
+        setExpenses(prev => prev.filter(e => e.id !== id))
       }
     } catch (err) {
       setDeleteMsg('Network error: ' + err.message)
