@@ -22,6 +22,8 @@ export default function ExpensesPage() {
   const [form, setForm] = useState({ house: 'acoma', category: 'rent', description: '', amount: '', is_recurring: false })
   const [saving, setSaving] = useState(false)
   const [filterHouse, setFilterHouse] = useState('all')
+  const [deleteMsg, setDeleteMsg] = useState(null)
+  const [deletingId, setDeletingId] = useState(null)
 
   function prevMonth() { if (month === 0) { setMonth(11); setYear(y => y-1) } else setMonth(m => m-1) }
   function nextMonth() { if (month === 11) { setMonth(0); setYear(y => y+1) } else setMonth(m => m+1) }
@@ -50,13 +52,22 @@ export default function ExpensesPage() {
   }
 
   async function deleteExpense(id) {
-    const res = await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
-    if (!res.ok) {
+    setDeletingId(id)
+    setDeleteMsg(null)
+    try {
+      const res = await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
       const d = await res.json().catch(() => ({}))
-      alert('Delete failed: ' + (d.error || res.status))
-      return
+      if (!res.ok) {
+        setDeleteMsg('Error ' + res.status + ': ' + (d.error || 'unknown'))
+      } else {
+        setDeleteMsg('Deleted ✓')
+        setTimeout(() => setDeleteMsg(null), 2000)
+        load()
+      }
+    } catch (err) {
+      setDeleteMsg('Network error: ' + err.message)
     }
-    load()
+    setDeletingId(null)
   }
 
   const filtered = filterHouse === 'all' ? expenses : expenses.filter(e => e.house === filterHouse)
@@ -120,6 +131,12 @@ export default function ExpensesPage() {
           </div>
         )}
 
+        {deleteMsg && (
+          <div style={{ marginBottom: 12, padding: '8px 14px', borderRadius: 6, background: deleteMsg.startsWith('Error') || deleteMsg.startsWith('Network') ? '#2a0a0a' : '#0a2a0a', border: '1px solid ' + (deleteMsg.startsWith('Error') || deleteMsg.startsWith('Network') ? '#5a1a1a' : '#1a5a1a'), color: deleteMsg.startsWith('Error') || deleteMsg.startsWith('Network') ? '#ef4444' : '#4ade80', fontSize: 13 }}>
+            {deleteMsg}
+          </div>
+        )}
+
         <div style={card}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14 }}>
             <div style={lbl}>{filterHouse === 'all' ? 'All Expenses' : filterHouse.charAt(0).toUpperCase()+filterHouse.slice(1)} — {MONTHS[month]} {year}</div>
@@ -137,7 +154,7 @@ export default function ExpensesPage() {
                   <span style={{ fontSize: 10, color: '#5b9cf6', background: 'rgba(91,156,246,0.1)', border: '1px solid rgba(91,156,246,0.2)', borderRadius: 4, padding: '2px 6px', whiteSpace: 'nowrap' }}>↻ recurring</span>
                 )}
                 <span style={{ fontSize: 13, color: '#f87171', fontWeight: 500, minWidth: 70, textAlign: 'right' }}>-{fmt(e.amount)}</span>
-                <button onClick={() => deleteExpense(e.id)} style={{ background: '#2a0a0a', border: '1px solid #5a1a1a', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700, borderRadius: 4, padding: '3px 8px', flexShrink: 0 }} title="Delete expense">✕</button>
+                <button onClick={() => deleteExpense(e.id)} disabled={deletingId === e.id} style={{ background: '#2a0a0a', border: '1px solid #5a1a1a', color: '#ef4444', cursor: 'pointer', fontSize: 12, fontWeight: 700, borderRadius: 4, padding: '3px 8px', flexShrink: 0, opacity: deletingId === e.id ? 0.5 : 1 }} title="Delete expense">{deletingId === e.id ? '…' : '✕'}</button>
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0' }}>
