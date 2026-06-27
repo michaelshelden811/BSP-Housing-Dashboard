@@ -50,6 +50,7 @@ export default function ExpensesPage() {
   }
 
   async function deleteExpense(id) {
+    if (!confirm('Delete this expense?')) return
     await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
     load()
   }
@@ -137,7 +138,7 @@ export default function ExpensesPage() {
                   )}
                 </span>
                 <span style={{ fontSize: 13, color: '#f87171', fontWeight: 500, textAlign: 'right' }}>-{fmt(e.amount)}</span>
-                <button onClick={() => deleteExpense(e.id)} style={{ background: 'transparent', border: 'none', color: '#555', cursor: 'pointer', fontSize: 13 }}>✕</button>
+                <button onClick={() => deleteExpense(e.id)} style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', fontSize: 14, fontWeight: 700, lineHeight: 1 }} title="Delete expense">✕</button>
               </div>
             ))}
             <div style={{ display: 'flex', justifyContent: 'space-between', padding: '12px 0 0' }}>
