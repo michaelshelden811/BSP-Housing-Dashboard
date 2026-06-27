@@ -50,8 +50,12 @@ export default function ExpensesPage() {
   }
 
   async function deleteExpense(id) {
-    if (!confirm('Delete this expense?')) return
-    await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
+    const res = await fetch(`/api/expenses?id=${id}`, { method: 'DELETE' })
+    if (!res.ok) {
+      const d = await res.json().catch(() => ({}))
+      alert('Delete failed: ' + (d.error || res.status))
+      return
+    }
     load()
   }
 
