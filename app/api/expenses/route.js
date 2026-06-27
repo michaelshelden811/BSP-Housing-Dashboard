@@ -101,15 +101,19 @@ export async function DELETE(request) {
   if (expense && expense.is_recurring) {
     const prevMonth = expense.month === 1 ? 12 : expense.month - 1
     const prevYear = expense.month === 1 ? expense.year - 1 : expense.year
-    await supabase
+    let query = supabase
       .from('expenses')
       .update({ is_recurring: false })
       .eq('month', prevMonth)
       .eq('year', prevYear)
       .eq('house', expense.house)
       .eq('category', expense.category)
-      .eq('description', expense.description || '')
       .eq('is_recurring', true)
+    // Handle null vs string description
+    query = expense.description
+      ? query.eq('description', expense.description)
+      : query.is('description', null)
+    await query
   }
 
   return Response.json({ success: true })
