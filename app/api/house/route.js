@@ -7,10 +7,10 @@ export async function GET(request) {
   const year = parseInt(searchParams.get('year') || new Date().getFullYear())
   const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY)
 
-  // Seed recurring expenses from prior month before loading data
-  const prevMonth = month === 1 ? 12 : month - 1
-  const prevYear = month === 1 ? year - 1 : year
-
+  // Carry recurring expenses forward into this month before loading data.
+  // Looks at the MOST RECENT prior occurrence of each recurring expense for
+  // this house (not just last month), so a gap of unvisited months doesn't
+  // break the chain.
   const { data: currentExpenses } = await supabase
     .from('expenses')
     .select('*')
@@ -18,16 +18,29 @@ export async function GET(request) {
     .eq('month', month)
     .eq('year', year)
 
-  const { data: recurringExpenses } = await supabase
+  const { data: priorRecurring } = await supabase
     .from('expenses')
     .select('*')
     .eq('house', house)
-    .eq('month', prevMonth)
-    .eq('year', prevYear)
     .eq('is_recurring', true)
+    .or(`year.lt.${year},and(year.eq.${year},month.lt.${month})`)
+    .order('year', { ascending: false })
+    .order('month', { ascending: false })
 
-  if (recurringExpenses && recurringExpenses.length > 0) {
-    const toSeed = recurringExpenses.filter(r =>
+  if (priorRecurring && priorRecurring.length > 0) {
+    // Keep only the single most recent prior row per recurring series
+    // (a series = same category + description + amount, within this house).
+    const seen = new Set()
+    const latestPerSeries = []
+    for (const r of priorRecurring) {
+      const key = `${r.category}|${r.description}|${r.amount}`
+      if (!seen.has(key)) {
+        seen.add(key)
+        latestPerSeries.push(r)
+      }
+    }
+
+    const toSeed = latestPerSeries.filter(r =>
       !(currentExpenses || []).some(c =>
         c.house === r.house &&
         c.category === r.category &&
@@ -36,6 +49,7 @@ export async function GET(request) {
         c.is_recurring === true
       )
     )
+
     if (toSeed.length > 0) {
       await supabase.from('expenses').insert(toSeed.map(r => ({
         house: r.house,
